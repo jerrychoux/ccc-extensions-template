@@ -1,11 +1,27 @@
 {
-    "extends": "./base.tsconfig.json",
-    "compilerOptions": {
-        "outDir": "./dist",
-        "rootDir": "./source",
-        "types": [
-            "node",
-            "@cocos/creator-types/editor",
-        ]
-    }
+  "compilerOptions": {
+    "target": "ES2017",
+    "useDefineForClassFields": true,
+    "module": "CommonJS",
+    "lib": ["ES2017", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+
+    "moduleResolution": "node",
+    "isolatedModules": true,
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+
+    "types": ["node", "@cocos/creator-types/editor"]
+  },
+  "include": ["source/**/*.ts", "source/**/*.d.ts", "source/**/*.vue", "@types/**/*.d.ts"],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }
