@@ -22,20 +22,13 @@ module.exports = Editor.Panel.define({
   style,
   $: {
     app: '#app',
-    text: '#text',
   },
   methods: {
     hello() {
-      if (this.$.text) {
-        this.$.text.innerHTML = 'hello'
-        console.log('[cocos-panel-html.default]: hello')
-      }
+      console.log('[cocos-panel-html.default]: hello')
     },
   },
   ready() {
-    if (this.$.text) {
-      this.$.text.innerHTML = 'Hello Cocos.'
-    }
     if (this.$.app) {
       const app = createApp(appTemplate)
       app.config.compilerOptions.isCustomElement = (tag) => tag.startsWith('ui-')
