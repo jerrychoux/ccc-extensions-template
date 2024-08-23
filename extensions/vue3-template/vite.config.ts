@@ -64,7 +64,7 @@ const bundles: Bundles = {
   defaultPanel: 'panels/default/index.ts',
 }
 
-const getInput = () => Object.fromEntries(Object.entries(bundles).map(([key, value]) => [key, resolve(__dirname, `./source/${value}`)]))
+const getInput = () => Object.fromEntries(Object.entries(bundles).map(([key, value]) => [key, resolve(__dirname, `./src/${value}`)]))
 
 export default defineConfig({
   base: './',
