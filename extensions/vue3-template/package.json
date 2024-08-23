@@ -6,6 +6,7 @@
   "type": "module",
   "author": "Cocos Creator",
   "editor": ">=3.8.3",
+  "license": "MIT",
   "scripts": {
     "build": "vue-tsc && vite build",
     "watch": "vue-tsc --watch"
