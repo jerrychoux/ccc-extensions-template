@@ -1,5 +1,6 @@
 import { createApp, App } from 'vue'
 
+import style from './style.css?raw'
 import appTemplate from './index.vue'
 
 const panelDataMap = new WeakMap<any, App>()
@@ -18,7 +19,7 @@ module.exports = Editor.Panel.define({
     },
   },
   template: '<div id=app></div>',
-  style: '',
+  style,
   $: {
     app: '#app',
     text: '#text',
