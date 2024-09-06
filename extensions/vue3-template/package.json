@@ -8,8 +8,9 @@
   "editor": ">=3.8.3",
   "license": "MIT",
   "scripts": {
-    "build": "vue-tsc && vite build",
-    "build:watch": "concurrently \"yarn vue-tsc --watch\" \"yarn vite build --watch\""
+    "build": "vue-tsc && vite build --mode development",
+    "build:watch": "concurrently \"yarn vue-tsc --watch\" \"yarn vite build --watch --mode development\"",
+    "build:production": "vue-tsc && vite build --mode production"
   },
   "description": "i18n:vue3-template.description",
   "main": "./dist/main.js",
@@ -65,6 +66,13 @@
           "default.hello"
         ]
       }
-    }
+    },
+    "shortcuts": [
+      {
+        "message": "open-panel",
+        "win": "ctrl+o",
+        "mac": "cmd+o"
+      }
+    ]
   }
 }

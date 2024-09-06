@@ -1,9 +1,65 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "type": "object",
-    "description": "其他扩展插件的扩展配置 / Extended configuration for other extension plugins",
-    "properties": {
-
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "description": "其他扩展插件的扩展配置 / Extended configuration for other extension plugins",
+  "properties": {
+    "menu": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string" },
+          "label": { "type": "string" },
+          "message": { "type": "string" },
+          "accelerator": { "type": "string" },
+          "click": { "type": "string" }
+        },
+        "required": ["path", "label", "message"]
+      }
     },
-    "required": []
+    "messages": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[a-zA-Z0-9_-]+$": {
+          "type": "object",
+          "properties": {
+            "methods": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9._-]+$"
+              }
+            }
+          }
+        }
+      }
+    },
+    "shortcuts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "The identifier for the shortcut action."
+          },
+          "when": {
+            "type": "string",
+            "description": "Condition under which the shortcut is active."
+          },
+          "win": {
+            "type": "string",
+            "description": "The key combination for Windows."
+          },
+          "mac": {
+            "type": "string",
+            "description": "The key combination for macOS."
+          }
+        },
+        "required": ["message", "win", "mac"]
+      }
+    }
+  },
+  "required": []
 }

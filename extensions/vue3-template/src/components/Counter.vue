@@ -10,9 +10,11 @@ import { ref } from 'vue'
 const counter = ref(0)
 
 function addition() {
+  log('add')
   counter.value += 1
 }
 function subtraction() {
+  warn('sub')
   counter.value -= 1
 }
 </script>

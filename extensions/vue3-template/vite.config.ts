@@ -66,39 +66,45 @@ const inputOption: InputOption = {
   defaultPanel: 'panels/default/index.ts',
 }
 
-const getInputs = () => Object.fromEntries(Object.entries(inputOption).map(([key, value]) => [key, resolve(__dirname, `./src/${value}`)]))
+const getInputs = () =>
+  Object.fromEntries(Object.entries(inputOption).map(([key, value]) => [key, resolve(__dirname, `./src/${value}`)]))
 
-const globalVariables = {
-  __EXTENSION_VERSION__: JSON.stringify(packageJson.version),
-  __EXTENSION_NAME__: JSON.stringify(packageJson.name),
+const getGlobalVariables = (mode: string) => {
+  return {
+    __EXTENSION_MODE__: JSON.stringify(mode),
+    __EXTENSION_VERSION__: JSON.stringify(packageJson.version),
+    __EXTENSION_NAME__: JSON.stringify(packageJson.name),
+  }
 }
 
-export default defineConfig({
-  base: './',
-  plugins: [vue()],
-  optimizeDeps: {
-    exclude: ['electron'],
-    esbuildOptions: {
-      define: {
-        global: 'globalThis',
+export default defineConfig(({ mode }) => {
+  return {
+    base: './',
+    plugins: [vue()],
+    optimizeDeps: {
+      exclude: ['electron'],
+      esbuildOptions: {
+        define: {
+          global: 'globalThis',
+        },
       },
     },
-  },
-  define: globalVariables,
-  build: {
-    minify: false,
-    outDir: 'dist',
-    rollupOptions: {
-      preserveEntrySignatures: 'allow-extension',
-      input: getInputs(),
-      output: {
-        format: 'cjs',
-        entryFileNames: '[name].js',
-        chunkFileNames: 'chunk.[hash].js',
-        assetFileNames: 'assets/[name].[hash][extname]',
+    define: getGlobalVariables(mode),
+    build: {
+      minify: false,
+      outDir: 'dist',
+      rollupOptions: {
+        preserveEntrySignatures: 'allow-extension',
+        input: getInputs(),
+        output: {
+          format: 'cjs',
+          entryFileNames: '[name].js',
+          chunkFileNames: 'chunk.[hash].js',
+          assetFileNames: 'assets/[name].[hash][extname]',
+        },
+        plugins: [organizeInputFileToCustomFolder(inputOption), fixImportChunkFilePath()],
+        external: ['electron', ...builtinModules],
       },
-      plugins: [organizeInputFileToCustomFolder(inputOption), fixImportChunkFilePath()],
-      external: ['electron', ...builtinModules],
     },
-  },
+  }
 })

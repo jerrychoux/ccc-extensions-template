@@ -4,19 +4,33 @@ import style from './style.css?raw'
 import template from './index.vue'
 import path, { join } from 'path'
 import { existsSync, readdirSync, statSync } from 'fs'
+import '../../utils/logger'
 
 const entrieName = 'defaultPanel'
 const panelDataMap = new WeakMap<any, App>()
 
-function findPanelFrameShadowRoot(): ShadowRoot | null {
+function findDockFrameShadowRoot(): ShadowRoot | null {
   const dockFrame = document.querySelector('dock-frame#dock')
-  if (!dockFrame) return null
+  if (!dockFrame) {
+    console.warn('can not find <dock-frame id="dock">')
+    return null
+  }
 
-  const dockShadowRoot = dockFrame.shadowRoot
-  if (!dockShadowRoot) return null
+  return dockFrame.shadowRoot
+}
 
-  const panelFrame = dockShadowRoot.querySelector('panel-frame[name="vue3-template"]')
-  if (!panelFrame) return null
+function findPanelFrameShadowRoot(): ShadowRoot | null {
+  const dockShadowRoot = findDockFrameShadowRoot()
+  if (!dockShadowRoot) {
+    console.warn('can not find #shadow-root in <dock-frame id="dock">')
+    return null
+  }
+
+  const panelFrame = dockShadowRoot.querySelector(`panel-frame[name="${__EXTENSION_NAME__}"]`)
+  if (!panelFrame) {
+    console.warn(`can not find <panel-frame name="${__EXTENSION_NAME__}">`)
+    return null
+  }
 
   return panelFrame.shadowRoot
 }
@@ -25,7 +39,7 @@ function addSplitedCssStyles() {
   const shadowRoot = findPanelFrameShadowRoot()
   if (!shadowRoot) return
 
-  const cssFileRegex = new RegExp(`^${entrieName}\.[A-Za-z0-9]+\.css$`, 'gi')
+  const cssFileRegex = new RegExp(`^${entrieName}\.[A-Za-z0-9_\-]+\.css$`, 'gi')
   const extensionPath = Editor.Package.getPath(__EXTENSION_NAME__)!
   const assetsPath = path.resolve(extensionPath, 'dist', 'assets')
 
@@ -54,10 +68,10 @@ function addSplitedCssStyles() {
 module.exports = Editor.Panel.define({
   listeners: {
     show() {
-      console.log('show')
+      log('show')
     },
     hide() {
-      console.log('hide')
+      log('hide')
     },
   },
   template: '<div id=app></div>',
@@ -67,7 +81,7 @@ module.exports = Editor.Panel.define({
   },
   methods: {
     hello() {
-      console.log('[cocos-panel-html.default]: hello')
+      log('[cocos-panel-html.default]: hello')
     },
   },
   ready() {
