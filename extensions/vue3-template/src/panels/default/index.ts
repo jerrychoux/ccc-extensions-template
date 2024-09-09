@@ -39,24 +39,27 @@ function addSplitedCssStyles() {
   const shadowRoot = findPanelFrameShadowRoot()
   if (!shadowRoot) return
 
-  const cssFileRegex = new RegExp(`^${entrieName}\.[A-Za-z0-9_\-]+\.css$`, 'gi')
-  const extensionPath = Editor.Package.getPath(__EXTENSION_NAME__)!
-  const assetsPath = path.resolve(extensionPath, 'dist', 'assets')
+  const cssFileNames = ['vendor', 'chunk', entrieName]
+  cssFileNames.forEach((name) => {
+    const extensionPath = Editor.Package.getPath(__EXTENSION_NAME__)!
+    const assetsPath = path.resolve(extensionPath, 'dist', 'assets')
 
-  if (!existsSync(assetsPath)) return
+    if (!existsSync(assetsPath)) return
+    const cssFileRegex = new RegExp(`^${name}\.[A-Za-z0-9_\-]+\.css$`, 'gi')
 
-  const matchFiles = readdirSync(assetsPath)
-    .filter((file) => statSync(join(assetsPath, file)).isFile() && cssFileRegex.test(file))
-    .map((file) => join(assetsPath, file))
+    const matchFiles = readdirSync(assetsPath)
+      .filter((file) => statSync(join(assetsPath, file)).isFile() && cssFileRegex.test(file))
+      .map((file) => join(assetsPath, file))
 
-  matchFiles.forEach((href) => {
-    // Create a <link> element
-    const link = document.createElement('link')
-    // Set attributes for the <link> element
-    link.rel = 'stylesheet'
-    link.href = href // URL to your CSS file
-    // Append the <link> element to shadowRoot
-    shadowRoot.appendChild(link)
+    matchFiles.forEach((href) => {
+      // Create a <link> element
+      const link = document.createElement('link')
+      // Set attributes for the <link> element
+      link.rel = 'stylesheet'
+      link.href = href // URL to your CSS file
+      // Append the <link> element to shadowRoot
+      shadowRoot.appendChild(link)
+    })
   })
 }
 

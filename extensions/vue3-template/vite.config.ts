@@ -106,6 +106,8 @@ const inputOption: InputOption = {
   defaultPanel: 'panels/default/index.ts',
 }
 
+const inputKeys = Object.keys(inputOption)
+
 const getInputs = () =>
   Object.fromEntries(Object.entries(inputOption).map(([key, value]) => [key, resolve(__dirname, `./src/${value}`)]))
 
@@ -146,12 +148,33 @@ export default defineConfig(({ mode }) => {
         output: {
           format: 'cjs',
           entryFileNames: '[name].js',
-          chunkFileNames: '[name].[hash].js',
-          assetFileNames: 'assets/[name].[hash][extname]',
+          chunkFileNames(info) {
+            if (info.name === 'vendor') {
+              return 'vendor.[hash].js'
+            }
+
+            return 'chunk.[hash].js'
+          },
           manualChunks(id) {
             if (id.includes('node_modules')) {
               return 'vendor'
             }
+          },
+          assetFileNames(info) {
+            const filePath = info.name
+            const fileExt = path.extname(filePath)
+            const fileName = path.basename(filePath, fileExt)
+            if (fileExt === '.css') {
+              if (fileName.includes('vendor')) {
+                return 'assets/vendor.[hash].css'
+              }
+
+              if (!inputKeys.includes(fileName)) {
+                return 'assets/chunk.[hash].css'
+              }
+            }
+
+            return 'assets/[name].[hash][extname]'
           },
         },
         plugins: [organizeInputFileToCustomFolder(inputOption), fixImportFilesPath(), doJsObfuscator(mode)],
