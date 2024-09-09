@@ -4,6 +4,8 @@ import { defineConfig } from 'vite'
 import type { Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { builtinModules } from 'module'
+import obfuscator from 'rollup-plugin-obfuscator'
+import { TInputOptions } from 'javascript-obfuscator/typings/src/types/options/TInputOptions'
 
 const packageJson = JSON.parse(fs.readFileSync('./package.json', 'utf-8'))
 
@@ -30,35 +32,73 @@ function organizeInputFileToCustomFolder(inputOption: InputOption): Plugin {
   }
 }
 
-const chunkFilePathPattern = /\.{0,2}\/?chunk\.[A-Za-z0-9]+\.js/gi
-function fixImportChunkFilePath(): Plugin {
+const chunkFilePathPattern = /\.{0,2}\/?chunk\.[A-Za-z0-9_\-]+\.js/gi
+const vendorFilePathPattern = /\.{0,2}\/?vendor\.[A-Za-z0-9_\-]+\.js/gi
+function fixImportFilesPath(): Plugin {
+  const getRelativePath = (from: string, to: string) =>
+    path
+      .relative(path.dirname(from), to)
+      .replace(/\\/g, '/')
+      .replace(/^(?!\.)/, './')
+
   return {
-    name: 'fix-import-chunk-file-path',
+    name: 'fix-import-files-path',
     generateBundle(options, bundle) {
       for (const fileName in bundle) {
         const file = bundle[fileName]
         if (file.type === 'chunk') {
-          if (file.fileName.match(chunkFilePathPattern)) {
+          if (file.fileName.match(chunkFilePathPattern) || file.fileName.match(vendorFilePathPattern)) {
             continue
           }
 
-          const match = file.code.match(chunkFilePathPattern)
-          if (match) {
+          const matchChunk = file.code.match(chunkFilePathPattern)
+          if (matchChunk) {
             const filePath = path.resolve('./dist', file.fileName)
-            const matchPath = path.resolve('./dist', match[0])
-            const relativePath = path
-              .relative(path.dirname(filePath), matchPath)
-              .replace(/\\/g, '/')
-              .replace(/^(?!\.)/, './')
+            const matchPath = path.resolve('./dist', matchChunk[0])
+            const relativePath = getRelativePath(filePath, matchPath)
 
-            if (match[0] !== relativePath) {
+            if (matchChunk[0] !== relativePath) {
               file.code = file.code.replace(chunkFilePathPattern, relativePath)
+            }
+          }
+
+          const matchVendor = file.code.match(vendorFilePathPattern)
+          if (matchVendor) {
+            const filePath = path.resolve('./dist', file.fileName)
+            const matchPath = path.resolve('./dist', matchVendor[0])
+            const relativePath = getRelativePath(filePath, matchPath)
+
+            if (matchVendor[0] !== relativePath) {
+              file.code = file.code.replace(vendorFilePathPattern, relativePath)
             }
           }
         }
       }
     },
   }
+}
+
+const obfuscatorConfig: TInputOptions = {
+  compact: true, // 压缩代码，移除多余的空格和换行符
+  controlFlowFlattening: true, // 控制流扁平化，使代码结构更复杂
+  controlFlowFlatteningThreshold: 0.8, // 控制流扁平化的应用比例 (0-1)
+  deadCodeInjection: true, // 是否注入死代码，增加代码复杂度
+  deadCodeInjectionThreshold: 0.5, // 死代码注入的比例 (0-1)
+  debugProtection: true, // 防止代码在调试器中运行
+  stringArray: true, // 是否将字符串转换为数组形式
+  rotateStringArray: true, // 随机打乱字符串数组顺序
+  selfDefending: true, // 增加自我防护，防止代码被篡改
+  splitStrings: true, // 是否将长字符串拆分为多个部分
+  splitStringsChunkLength: 5, // 拆分字符串时的最大长度
+}
+
+function doJsObfuscator(mode: string) {
+  return mode === 'production'
+    ? obfuscator({
+        options: obfuscatorConfig,
+        exclude: ['node_modules/**'],
+      })
+    : undefined
 }
 
 const inputOption: InputOption = {
@@ -91,7 +131,14 @@ export default defineConfig(({ mode }) => {
     },
     define: getGlobalVariables(mode),
     build: {
-      minify: false,
+      minify: mode === 'production' ? 'terser' : false,
+      terserOptions:
+        mode === 'production'
+          ? {
+              compress: { drop_console: true, drop_debugger: true },
+              format: { comments: false },
+            }
+          : undefined,
       outDir: 'dist',
       rollupOptions: {
         preserveEntrySignatures: 'allow-extension',
@@ -99,10 +146,15 @@ export default defineConfig(({ mode }) => {
         output: {
           format: 'cjs',
           entryFileNames: '[name].js',
-          chunkFileNames: 'chunk.[hash].js',
+          chunkFileNames: '[name].[hash].js',
           assetFileNames: 'assets/[name].[hash][extname]',
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              return 'vendor'
+            }
+          },
         },
-        plugins: [organizeInputFileToCustomFolder(inputOption), fixImportChunkFilePath()],
+        plugins: [organizeInputFileToCustomFolder(inputOption), fixImportFilesPath(), doJsObfuscator(mode)],
         external: ['electron', ...builtinModules],
       },
     },
