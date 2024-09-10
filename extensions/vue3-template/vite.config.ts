@@ -32,8 +32,8 @@ function organizeInputFileToCustomFolder(inputOption: InputOption): Plugin {
   }
 }
 
-const chunkFilePathPattern = /\.{0,2}\/?chunk\.[A-Za-z0-9_\-]+\.js/gi
-const vendorFilePathPattern = /\.{0,2}\/?vendor\.[A-Za-z0-9_\-]+\.js/gi
+const chunkFilePathPattern = /\.{0,2}\/?js\/chunk\.[A-Za-z0-9_\-]+\.js/gi
+const vendorFilePathPattern = /\.{0,2}\/?js\/vendor\.[A-Za-z0-9_\-]+\.js/gi
 function fixImportFilesPath(): Plugin {
   const getRelativePath = (from: string, to: string) =>
     path
@@ -119,67 +119,65 @@ const getGlobalVariables = (mode: string) => {
   }
 }
 
-export default defineConfig(({ mode }) => {
-  return {
-    base: './',
-    plugins: [vue()],
-    optimizeDeps: {
-      exclude: ['electron'],
-      esbuildOptions: {
-        define: {
-          global: 'globalThis',
-        },
+export default defineConfig(({ mode }) => ({
+  base: './',
+  plugins: [vue()],
+  optimizeDeps: {
+    exclude: ['electron'],
+    esbuildOptions: {
+      define: {
+        global: 'globalThis',
       },
     },
-    define: getGlobalVariables(mode),
-    build: {
-      minify: mode === 'production' ? 'terser' : false,
-      terserOptions:
-        mode === 'production'
-          ? {
-              compress: { drop_console: true, drop_debugger: true },
-              format: { comments: false },
-            }
-          : undefined,
-      outDir: 'dist',
-      rollupOptions: {
-        preserveEntrySignatures: 'allow-extension',
-        input: getInputs(),
-        output: {
-          format: 'cjs',
-          entryFileNames: '[name].js',
-          chunkFileNames(info) {
-            if (info.name === 'vendor') {
-              return 'vendor.[hash].js'
-            }
+  },
+  define: getGlobalVariables(mode),
+  build: {
+    minify: mode === 'production' ? 'terser' : false,
+    terserOptions:
+      mode === 'production'
+        ? {
+            compress: { drop_console: true, drop_debugger: true },
+            format: { comments: false },
+          }
+        : undefined,
+    outDir: 'dist',
+    rollupOptions: {
+      preserveEntrySignatures: 'allow-extension',
+      input: getInputs(),
+      output: {
+        format: 'cjs',
+        entryFileNames: '[name].js',
+        chunkFileNames(info) {
+          if (info.name === 'vendor') {
+            return 'js/vendor.[hash].js'
+          }
 
-            return 'chunk.[hash].js'
-          },
-          manualChunks(id) {
-            if (id.includes('node_modules')) {
-              return 'vendor'
-            }
-          },
-          assetFileNames(info) {
-            const filePath = info.name
-            const fileExt = path.extname(filePath)
-            const fileName = path.basename(filePath, fileExt)
-            if (fileExt === '.css') {
-              if (fileName.includes('vendor')) {
-                return 'assets/vendor.[hash].css'
-              }
-
-              if (!inputKeys.includes(fileName)) {
-                return 'assets/chunk.[hash].css'
-              }
-            }
-
-            return 'assets/[name].[hash][extname]'
-          },
+          return 'js/chunk.[hash].js'
         },
-        plugins: [organizeInputFileToCustomFolder(inputOption), fixImportFilesPath(), doJsObfuscator(mode)],
-        external: ['electron', ...builtinModules],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return 'vendor'
+          }
+        },
+        assetFileNames(info) {
+          const filePath = info.name
+          const fileExt = path.extname(filePath)
+          const fileName = path.basename(filePath, fileExt)
+          if (fileExt === '.css') {
+            if (fileName.includes('vendor')) {
+              return 'assets/vendor.[hash].css'
+            }
+
+            if (!inputKeys.includes(fileName)) {
+              return 'assets/chunk.[hash].css'
+            }
+          }
+
+          return 'assets/[name].[hash][extname]'
+        },
       },
+      plugins: [organizeInputFileToCustomFolder(inputOption), fixImportFilesPath(), doJsObfuscator(mode)],
+      external: ['electron', ...builtinModules],
     },
-  }
-})
+  },
+}))
