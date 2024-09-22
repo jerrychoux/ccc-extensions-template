@@ -55,14 +55,24 @@ export function addSplitedCssStyles(entrieName: string) {
   })
 }
 
-export function getDockTabHeight() {
-  let dockTabHeight = 0
+function getDockTabsHeight() {
+  let dockTabsHeight = 0
   const dockFrameShadowRoot = findDockFrameShadowRoot()
   if (dockFrameShadowRoot) {
     const dockTabs = dockFrameShadowRoot.querySelector('dock-tabs')
     if (dockTabs) {
-      dockTabHeight = parseInt(window.getComputedStyle(dockTabs).getPropertyValue('height'))
+      dockTabsHeight = parseInt(window.getComputedStyle(dockTabs).getPropertyValue('height'))
     }
   }
-  return dockTabHeight
+  return dockTabsHeight
+}
+
+export interface Dock {
+  tabs: { height: number }
+}
+
+export function getDock(): Dock {
+  return {
+    tabs: { height: getDockTabsHeight() },
+  }
 }

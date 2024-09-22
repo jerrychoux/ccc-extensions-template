@@ -7,7 +7,12 @@
   "author": "Cocos Creator",
   "editor": ">=3.8.3",
   "license": "MIT",
+  "engines": {
+    "node": ">=22.8.0",
+    "yarn": "1.x"
+  },
   "scripts": {
+    "preinstall": "node ./scripts/preinstall.js",
     "build": "vue-tsc && vite build --mode development",
     "build:watch": "concurrently \"yarn vue-tsc --watch\" \"yarn vite build --watch --mode development\"",
     "build:production": "vue-tsc && vite build --mode production"
@@ -22,12 +27,13 @@
   "devDependencies": {
     "@cocos/creator-types": "^3.8.3",
     "@types/fs-extra": "^9.0.5",
-    "@types/node": "^18.17.1",
+    "@types/node": "^22.5.5",
     "@vitejs/plugin-vue": "^5.1.2",
     "concurrently": "^8.2.2",
     "javascript-obfuscator": "^4.1.1",
     "rollup-plugin-obfuscator": "^1.1.0",
     "terser": "^5.31.6",
+    "tslib": "^2.7.0",
     "typescript": "^5.5.4",
     "vite": "^5.4.2",
     "vue-tsc": "^2.0.29"

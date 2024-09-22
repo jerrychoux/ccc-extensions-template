@@ -7,6 +7,7 @@ import { builtinModules } from 'module'
 import obfuscator from 'rollup-plugin-obfuscator'
 import { TInputOptions } from 'javascript-obfuscator/typings/src/types/options/TInputOptions'
 
+type Mode = 'production' | 'develop'
 const packageJson = JSON.parse(fs.readFileSync('./package.json', 'utf-8'))
 
 interface InputOption {
@@ -32,9 +33,20 @@ function organizeInputFileToCustomFolder(inputOption: InputOption): Plugin {
   }
 }
 
+function replacePlaceholders(template: string, ...args: string[]): string {
+  return args.reduce((result, value, index) => {
+    const placeholder = `{${index}}`
+    return result.split(placeholder).join(value)
+  }, template)
+}
+
 const chunkFilePathPattern = /\.{0,2}\/?js\/chunk\.[A-Za-z0-9_\-]+\.js/gi
 const vendorFilePathPattern = /\.{0,2}\/?js\/vendor\.[A-Za-z0-9_\-]+\.js/gi
-function fixImportFilesPath(): Plugin {
+const assetFilePathPatternDevelop =
+  /""\s\+\s\(typeof\sdocument\s===\s"undefined"\s\?\srequire\("url"\)\.pathToFileURL\(__dirname\s\+\s"([^"]+\.(?:png|jpg|svg))"\)\.href\s\:\snew\sURL\("([^"]+\.(?:png|jpg|svg))",\sdocument\.currentScript\s&&\sdocument\.currentScript\.src\s\|\|\sdocument\.baseURI\)\.href\)/
+const assetFilePathPatternProduction =
+  /""\+\("undefined"==typeof\sdocument\?require\("url"\)\.pathToFileURL\(__dirname\+"([^"]+\.(?:png|jpg|svg))"\)\.href\:new\sURL\("([^"]+\.(?:png|jpg|svg))",document\.currentScript&&document\.currentScript\.src\|\|document\.baseURI\)\.href\)/
+function fixImportFilesPath(mode: Mode): Plugin {
   const getRelativePath = (from: string, to: string) =>
     path
       .relative(path.dirname(from), to)
@@ -72,6 +84,20 @@ function fixImportFilesPath(): Plugin {
               file.code = file.code.replace(vendorFilePathPattern, relativePath)
             }
           }
+
+          const assetFilePathPattern =
+            mode === 'production' ? assetFilePathPatternProduction : assetFilePathPatternDevelop
+          const matchAsset = file.code.match(assetFilePathPattern)
+          if (matchAsset) {
+            const replaceTemplate = `{0}.resolve(Editor.Package.getPath({1}), 'dist', '{2}')`
+            const pathPattern = /(?:[ ,]?)([a-zA-Z][a-zA-Z0-9]*)\s?=\s?require\(['"]path['"]\)[,;]/
+            const matchPath = file.code.match(pathPattern)
+
+            const pathVariableName = mode === 'production' ? (matchPath ? matchPath[1] : 'require("path")') : 'path'
+            const extensionName = JSON.stringify(packageJson.name)
+            const replaceStr = replacePlaceholders(replaceTemplate, pathVariableName, extensionName, matchAsset[2])
+            file.code = file.code.replace(assetFilePathPattern, replaceStr)
+          }
         }
       }
     },
@@ -92,7 +118,7 @@ const obfuscatorConfig: TInputOptions = {
   splitStringsChunkLength: 5, // 拆分字符串时的最大长度
 }
 
-function doJsObfuscator(mode: string) {
+function doJsObfuscator(mode: Mode) {
   return mode === 'production'
     ? obfuscator({
         options: obfuscatorConfig,
@@ -111,7 +137,7 @@ const inputKeys = Object.keys(inputOption)
 const getInputs = () =>
   Object.fromEntries(Object.entries(inputOption).map(([key, value]) => [key, resolve(__dirname, `./src/${value}`)]))
 
-const getGlobalVariables = (mode: string) => {
+const getGlobalVariables = (mode: Mode) => {
   return {
     __EXTENSION_MODE__: JSON.stringify(mode),
     __EXTENSION_VERSION__: JSON.stringify(packageJson.version),
@@ -130,7 +156,7 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-  define: getGlobalVariables(mode),
+  define: getGlobalVariables(mode as Mode),
   build: {
     minify: mode === 'production' ? 'terser' : false,
     terserOptions:
@@ -176,7 +202,11 @@ export default defineConfig(({ mode }) => ({
           return 'assets/[name].[hash][extname]'
         },
       },
-      plugins: [organizeInputFileToCustomFolder(inputOption), fixImportFilesPath(), doJsObfuscator(mode)],
+      plugins: [
+        organizeInputFileToCustomFolder(inputOption),
+        fixImportFilesPath(mode as Mode),
+        doJsObfuscator(mode as Mode),
+      ],
       external: ['electron', ...builtinModules],
     },
   },

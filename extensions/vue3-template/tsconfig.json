@@ -1,27 +1,28 @@
 {
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/tsconfig.json",
   "compilerOptions": {
     "target": "ES2017",
-    "useDefineForClassFields": true,
     "module": "CommonJS",
-    "lib": ["ES2017", "DOM", "DOM.Iterable"],
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-
     "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "experimentalDecorators": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+
+    "useDefineForClassFields": true,
     "isolatedModules": true,
     "noEmit": true,
-    "resolveJsonModule": true,
-    "experimentalDecorators": true,
 
-    /* Linting */
-    "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "forceConsistentCasingInFileNames": true,
 
-    "types": ["node", "@cocos/creator-types/editor"]
+    "types": ["node", "@cocos/creator-types/editor"],
+    "lib": ["ES2017", "DOM", "DOM.Iterable"]
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "@types/**/*.d.ts"],
+  "exclude": ["vite.config.ts", "scripts/**/*.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
