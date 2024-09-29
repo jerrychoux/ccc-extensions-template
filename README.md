@@ -19,6 +19,8 @@ cd .\extensions\vue3-template\
 yarn
 # Build the project
 yarn build
+# Packaging the extension
+yarn packaging
 ```
 
 ## Usage

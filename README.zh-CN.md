@@ -19,6 +19,8 @@ cd .\extensions\vue3-template\
 yarn
 # 构建
 yarn build
+# 打包
+yarn packaging
 ```
 
 ## 用法
