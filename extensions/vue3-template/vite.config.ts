@@ -9,6 +9,7 @@ import { TInputOptions } from 'javascript-obfuscator/typings/src/types/options/T
 
 type Mode = 'production' | 'develop'
 const packageJson = JSON.parse(fs.readFileSync('./package.json', 'utf-8'))
+const extensionName = JSON.stringify(packageJson.name)
 
 interface InputOption {
   [entryAlias: string]: string
@@ -42,10 +43,11 @@ function replacePlaceholders(template: string, ...args: string[]): string {
 
 const chunkFilePathPattern = /\.{0,2}\/?js\/chunk\.[A-Za-z0-9_\-]+\.js/gi
 const vendorFilePathPattern = /\.{0,2}\/?js\/vendor\.[A-Za-z0-9_\-]+\.js/gi
+const pathPattern = /(?:[ ,]?)([a-zA-Z][a-zA-Z0-9]*)\s?=\s?require\(['"]path['"]\)[,;]/
 const assetFilePathPatternDevelop =
-  /""\s\+\s\(typeof\sdocument\s===\s"undefined"\s\?\srequire\("url"\)\.pathToFileURL\(__dirname\s\+\s"([^"]+\.(?:png|jpg|svg))"\)\.href\s\:\snew\sURL\("([^"]+\.(?:png|jpg|svg))",\sdocument\.currentScript\s&&\sdocument\.currentScript\.src\s\|\|\sdocument\.baseURI\)\.href\)/
+  /""\s\+\s\(typeof\sdocument\s===\s"undefined"\s\?\srequire\("url"\)\.pathToFileURL\(__dirname\s\+\s"([^"]+\.(?:png|jpg|svg))"\)\.href\s\:\snew\sURL\("([^"]+\.(?:png|jpg|svg))",\sdocument\.currentScript\s&&\sdocument\.currentScript\.src\s\|\|\sdocument\.baseURI\)\.href\)/g
 const assetFilePathPatternProduction =
-  /""\+\("undefined"==typeof\sdocument\?require\("url"\)\.pathToFileURL\(__dirname\+"([^"]+\.(?:png|jpg|svg))"\)\.href\:new\sURL\("([^"]+\.(?:png|jpg|svg))",document\.currentScript&&document\.currentScript\.src\|\|document\.baseURI\)\.href\)/
+  /""\+\("undefined"==typeof\sdocument\?require\("url"\)\.pathToFileURL\(__dirname\+"([^"]+\.(?:png|jpg|svg))"\)\.href\:new\sURL\("([^"]+\.(?:png|jpg|svg))",document\.currentScript&&document\.currentScript\.src\|\|document\.baseURI\)\.href\)/g
 function fixImportFilesPath(mode: Mode): Plugin {
   const getRelativePath = (from: string, to: string) =>
     path
@@ -85,19 +87,17 @@ function fixImportFilesPath(mode: Mode): Plugin {
             }
           }
 
+          const matchPath = file.code.match(pathPattern)
+          const pathVariableName = mode === 'production' ? (matchPath ? matchPath[1] : 'require("path")') : 'path'
+
           const assetFilePathPattern =
             mode === 'production' ? assetFilePathPatternProduction : assetFilePathPatternDevelop
-          const matchAsset = file.code.match(assetFilePathPattern)
-          if (matchAsset) {
+          const matchAssets = [...file.code.matchAll(assetFilePathPattern)]
+          matchAssets?.forEach((match) => {
             const replaceTemplate = `{0}.resolve(Editor.Package.getPath({1}), 'dist', '{2}')`
-            const pathPattern = /(?:[ ,]?)([a-zA-Z][a-zA-Z0-9]*)\s?=\s?require\(['"]path['"]\)[,;]/
-            const matchPath = file.code.match(pathPattern)
-
-            const pathVariableName = mode === 'production' ? (matchPath ? matchPath[1] : 'require("path")') : 'path'
-            const extensionName = JSON.stringify(packageJson.name)
-            const replaceStr = replacePlaceholders(replaceTemplate, pathVariableName, extensionName, matchAsset[2])
-            file.code = file.code.replace(assetFilePathPattern, replaceStr)
-          }
+            const replaceStr = replacePlaceholders(replaceTemplate, pathVariableName, extensionName, match[2])
+            file.code = file.code.replace(match[0], replaceStr)
+          })
         }
       }
     },
@@ -157,6 +157,11 @@ export default defineConfig(({ mode }) => ({
     },
   },
   define: getGlobalVariables(mode as Mode),
+  resolve: {
+    alias: {
+      '@assets': path.resolve(__dirname, 'src/assets'),
+    },
+  },
   build: {
     minify: mode === 'production' ? 'terser' : false,
     terserOptions:

@@ -20,7 +20,10 @@
     "noFallthroughCasesInSwitch": true,
 
     "types": ["node", "@cocos/creator-types/editor"],
-    "lib": ["ES2017", "DOM", "DOM.Iterable"]
+    "lib": ["ES2017", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@assets/*": ["./src/assets/*"]
+    }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "@types/**/*.d.ts"],
   "exclude": ["vite.config.ts", "scripts/**/*.ts"],
