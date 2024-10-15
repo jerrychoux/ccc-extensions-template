@@ -10,6 +10,9 @@ export const methods: { [key: string]: (...any: any) => any } = {
   openPanel() {
     Editor.Panel.open(__EXTENSION_NAME__)
   },
+  openAbout() {
+    Editor.Panel.open(`${__EXTENSION_NAME__}.about`)
+  },
 }
 
 /**

@@ -130,6 +130,7 @@ function doJsObfuscator(mode: Mode) {
 const inputOption: InputOption = {
   main: 'main.ts',
   defaultPanel: 'panels/default/index.ts',
+  aboutPanel: 'panels/about/index.ts',
 }
 
 const inputKeys = Object.keys(inputOption)

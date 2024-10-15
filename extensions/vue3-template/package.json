@@ -52,6 +52,17 @@
         "width": 1024,
         "height": 600
       }
+    },
+    "about": {
+      "title": "About",
+      "type": "simple",
+      "main": "dist/panels/aboutPanel",
+      "size": {
+        "min-width": 400,
+        "min-height": 300,
+        "width": 400,
+        "height": 300
+      }
     }
   },
   "contributions": {
@@ -71,6 +82,11 @@
       "open-panel": {
         "methods": [
           "openPanel"
+        ]
+      },
+      "open-about": {
+        "methods": [
+          "openAbout"
         ]
       },
       "send-to-panel": {
