@@ -88,7 +88,7 @@ function fixImportFilesPath(mode: Mode): Plugin {
           }
 
           const matchPath = file.code.match(pathPattern)
-          const pathVariableName = mode === 'production' ? (matchPath ? matchPath[1] : 'require("path")') : 'path'
+          const pathVariableName = matchPath ? matchPath[1] : 'require("path")'
 
           const assetFilePathPattern =
             mode === 'production' ? assetFilePathPatternProduction : assetFilePathPatternDevelop
