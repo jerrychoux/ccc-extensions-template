@@ -1,11 +1,14 @@
 import { createApp, App } from 'vue'
 
-import style from './style.css?raw'
-import template from './index.vue'
 import '../../utils/logger'
+import '../../utils/panel'
 import { addSplitedCssStyles } from '../../utils/dom'
 
-const entrieName = 'aboutPanel'
+import style from './style.css?raw'
+import template from './index.vue'
+
+panelKey = 'about'
+
 const panelDataMap = new WeakMap<any, App>()
 
 /**
@@ -28,7 +31,7 @@ module.exports = Editor.Panel.define({
     app: '#app',
   },
   ready() {
-    addSplitedCssStyles(entrieName)
+    addSplitedCssStyles()
 
     if (this.$.app) {
       const app = createApp(template)

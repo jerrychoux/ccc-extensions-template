@@ -1,5 +1,6 @@
 import path, { join } from 'path'
 import { existsSync, readdirSync, statSync } from 'fs'
+import { getPanelConfig } from './package'
 
 function findDockFrameShadowRoot(): ShadowRoot | null {
   const dockFrame = document.querySelector('dock-frame#dock')
@@ -8,29 +9,44 @@ function findDockFrameShadowRoot(): ShadowRoot | null {
     return null
   }
 
-  return dockFrame.shadowRoot
-}
-
-function findPanelFrameShadowRoot(): ShadowRoot | null {
-  const dockShadowRoot = findDockFrameShadowRoot()
-  if (!dockShadowRoot) {
+  if (!dockFrame.shadowRoot) {
     warn('can not find #shadow-root in <dock-frame id="dock">')
     return null
   }
 
-  const panelFrame = dockShadowRoot.querySelector(`panel-frame[name="${__EXTENSION_NAME__}"]`)
+  return dockFrame.shadowRoot
+}
+
+function findPanelFrameShadowRoot(root: Document | ShadowRoot, panelKey: string) {
+  const name = panelKey === 'default' ? __EXTENSION_NAME__ : `${__EXTENSION_NAME__}.${panelKey}`
+  const panelFrame = root.querySelector(`panel-frame[name="${name}"]`)
   if (!panelFrame) {
-    warn(`can not find <panel-frame name="${__EXTENSION_NAME__}">`)
+    warn(`can not find <panel-frame name="${name}">`)
+    return null
+  }
+
+  if (!panelFrame.shadowRoot) {
+    warn(`can not find #shadow-root in <panel-frame name="${name}">`)
     return null
   }
 
   return panelFrame.shadowRoot
 }
 
-export function addSplitedCssStyles(entrieName: string) {
-  const shadowRoot = findPanelFrameShadowRoot()
+export function addSplitedCssStyles() {
+  let shadowRoot = null
+
+  if (getPanelConfig(panelKey).type === 'dockable') {
+    shadowRoot = findDockFrameShadowRoot()
+    if (!shadowRoot) return
+  } else {
+    shadowRoot = document
+  }
+
+  shadowRoot = findPanelFrameShadowRoot(shadowRoot, panelKey)
   if (!shadowRoot) return
 
+  const entrieName = panelKey + 'Panel'
   const cssFileNames = ['vendor', 'chunk', entrieName]
   cssFileNames.forEach((name) => {
     const extensionPath = Editor.Package.getPath(__EXTENSION_NAME__)!
