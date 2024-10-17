@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "type": "module",
   "author": "Cocos Creator",
-  "editor": ">=3.8.3",
+  "editor": ">=3.8.4",
   "license": "MIT",
   "engines": {
     "node": ">=22.8.0",
@@ -27,7 +27,7 @@
     "vue": "^3.1.4"
   },
   "devDependencies": {
-    "@cocos/creator-types": "^3.8.3",
+    "@cocos/creator-types": "^3.8.4",
     "@types/archiver": "^6.0.2",
     "@types/fs-extra": "^9.0.5",
     "@types/node": "^22.5.5",
@@ -101,6 +101,15 @@
         "win": "ctrl+o",
         "mac": "cmd+o"
       }
-    ]
+    ],
+    "assets": {
+      "menu": {
+        "methods": "dist/contributions/assets/menu.js",
+        "createMenu": "onCreateMenu",
+        "assetMenu": "onAssetMenu",
+        "dbMenu": "onDBMenu",
+        "panelMenu": "onPanelMenu"
+      }
+    }
   }
 }

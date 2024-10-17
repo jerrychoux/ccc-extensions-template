@@ -21,12 +21,12 @@ function organizeInputFileToCustomFolder(inputOption: InputOption): Plugin {
     generateBundle(options, bundle) {
       for (const fileName in bundle) {
         const file = bundle[fileName]
-        if (file.type === 'chunk') {
-          const input = inputOption[file.name]
-          if (input) {
-            if (file.name.endsWith('Panel')) {
-              file.fileName = join('panels', file.fileName)
-            }
+        if (file.type === 'chunk' && file.isEntry) {
+          const filePath = inputOption[file.name]
+          if (filePath) {
+            const dirPath =
+              path.basename(filePath) === 'index.ts' ? path.dirname(path.dirname(filePath)) : path.dirname(filePath)
+            file.fileName = join(dirPath, file.fileName)
           }
         }
       }
@@ -129,8 +129,11 @@ function doJsObfuscator(mode: Mode) {
 
 const inputOption: InputOption = {
   main: 'main.ts',
+  // panels
   defaultPanel: 'panels/default/index.ts',
   aboutPanel: 'panels/about/index.ts',
+  // menu
+  menu: 'contributions/assets/menu.ts',
 }
 
 const inputKeys = Object.keys(inputOption)
