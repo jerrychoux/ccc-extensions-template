@@ -41,8 +41,8 @@ function replacePlaceholders(template: string, ...args: string[]): string {
   }, template)
 }
 
-const chunkFilePathPattern = /\.{0,2}\/?js\/chunk\.[A-Za-z0-9_\-]+\.js/gi
-const vendorFilePathPattern = /\.{0,2}\/?js\/vendor\.[A-Za-z0-9_\-]+\.js/gi
+const chunkFilePathPattern = /\.{0,2}\/?js\/chunk\.[A-Za-z0-9_\-]+\.js/g
+const vendorFilePathPattern = /\.{0,2}\/?js\/vendor\.[A-Za-z0-9_\-]+\.js/g
 const pathPattern = /(?:[ ,]?)([a-zA-Z][a-zA-Z0-9]*)\s?=\s?require\(['"]path['"]\)[,;]/
 const assetFilePathPatternDevelop =
   /""\s\+\s\(typeof\sdocument\s===\s"undefined"\s\?\srequire\("url"\)\.pathToFileURL\(__dirname\s\+\s"([^"]+\.(?:png|jpg|svg))"\)\.href\s\:\snew\sURL\("([^"]+\.(?:png|jpg|svg))",\sdocument\.currentScript\s&&\sdocument\.currentScript\.src\s\|\|\sdocument\.baseURI\)\.href\)/g
@@ -65,35 +65,38 @@ function fixImportFilesPath(mode: Mode): Plugin {
             continue
           }
 
-          const matchChunk = file.code.match(chunkFilePathPattern)
-          if (matchChunk) {
+          // chunks
+          const matchChunks = [...file.code.matchAll(chunkFilePathPattern)]
+          matchChunks.forEach((match) => {
             const filePath = path.resolve('./dist', file.fileName)
-            const matchPath = path.resolve('./dist', matchChunk[0])
+            const matchPath = path.resolve('./dist', match[0])
             const relativePath = getRelativePath(filePath, matchPath)
 
-            if (matchChunk[0] !== relativePath) {
-              file.code = file.code.replace(chunkFilePathPattern, relativePath)
+            if (match[0] !== relativePath) {
+              file.code = file.code.replace(match[0], relativePath)
             }
-          }
+          })
 
-          const matchVendor = file.code.match(vendorFilePathPattern)
-          if (matchVendor) {
+          // vendors
+          const matchVendors = [...file.code.matchAll(vendorFilePathPattern)]
+          matchVendors.forEach((match) => {
             const filePath = path.resolve('./dist', file.fileName)
-            const matchPath = path.resolve('./dist', matchVendor[0])
+            const matchPath = path.resolve('./dist', match[0])
             const relativePath = getRelativePath(filePath, matchPath)
 
-            if (matchVendor[0] !== relativePath) {
-              file.code = file.code.replace(vendorFilePathPattern, relativePath)
+            if (match[0] !== relativePath) {
+              file.code = file.code.replace(match[0], relativePath)
             }
-          }
+          })
 
+          // paths
           const matchPath = file.code.match(pathPattern)
           const pathVariableName = matchPath ? matchPath[1] : 'require("path")'
 
           const assetFilePathPattern =
             mode === 'production' ? assetFilePathPatternProduction : assetFilePathPatternDevelop
           const matchAssets = [...file.code.matchAll(assetFilePathPattern)]
-          matchAssets?.forEach((match) => {
+          matchAssets.forEach((match) => {
             const replaceTemplate = `{0}.resolve(Editor.Package.getPath({1}), 'dist', '{2}')`
             const replaceStr = replacePlaceholders(replaceTemplate, pathVariableName, extensionName, match[2])
             file.code = file.code.replace(match[0], replaceStr)
