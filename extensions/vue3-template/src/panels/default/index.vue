@@ -10,7 +10,7 @@ function onAboutClick() {
   <div>hello world</div>
   <Counter></Counter>
   <img src="./free.png" width="100" height="100" draggable="false" />
-  <ui-button @click="onAboutClick">about</ui-button>
+  <ui-button @confirm="onAboutClick">about</ui-button>
 </template>
 
 <style scoped></style>

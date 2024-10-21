@@ -1,7 +1,7 @@
 <template>
   <h2>{{ counter }}</h2>
-  <ui-button class="blue" @click="addition">+</ui-button>
-  <ui-button @click="subtraction">-</ui-button>
+  <ui-button class="blue" @confirm="addition">+</ui-button>
+  <ui-button @confirm="subtraction">-</ui-button>
 </template>
 
 <script setup lang="ts">
