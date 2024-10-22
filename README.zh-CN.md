@@ -1,3 +1,5 @@
+[English](./README.md) | **中文**
+
 # 项目简介
 
 包含插件开发基本配置的 Cocos Creator 基础项目。

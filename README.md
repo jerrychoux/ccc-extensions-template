@@ -1,3 +1,5 @@
+**English** | [中文](./README.zh-CN.md)
+
 # Project Overview
 
 A basic Cocos Creator project containing essential configurations for plugin development.
