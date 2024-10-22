@@ -6,5 +6,8 @@
   "_sourceId": "c30b28da-749e-479b-bcb6-cecd8d7be9e3",
   "creator": {
     "version": "3.8.4"
+  },
+  "scripts": {
+    "replaceExtensionName": "cd scripts && yarn replaceExtensionName"
   }
 }
