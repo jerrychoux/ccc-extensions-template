@@ -35,10 +35,10 @@
     "@babel/helper-validator-identifier" "^7.24.7"
     to-fast-properties "^2.0.0"
 
-"@cocos/creator-types@^3.8.4":
-  version "3.8.4"
-  resolved "https://registry.yarnpkg.com/@cocos/creator-types/-/creator-types-3.8.4.tgz#a4486dcfe58d30b348c030eaaf30e3e09a59ccd9"
-  integrity sha512-z+8qx726Zl/8rUUpbLjVAiNPn4XweRACEaY1vHeR3EHIcSQ9wtFlIFd2SZX5rOE8lt1S95nxv8OeLYXfbN4/2Q==
+"@cocos/creator-types@^3.8.3":
+  version "3.8.3"
+  resolved "https://registry.yarnpkg.com/@cocos/creator-types/-/creator-types-3.8.3.tgz#616358cf4ada0e51caac044d1bd451e6f43f3d06"
+  integrity sha512-dVAgORX+dWzINdM6gGOcgFNbFXUItEv9Dg2DCWWPHN1qMHaqUe1h+hslcIsJK9OxgOcmS6Lh9FZcklfXn5jkOQ==
 
 "@esbuild/aix-ppc64@0.21.5":
   version "0.21.5"

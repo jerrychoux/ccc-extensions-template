@@ -5,7 +5,7 @@
   "license": "MIT",
   "_sourceId": "c30b28da-749e-479b-bcb6-cecd8d7be9e3",
   "creator": {
-    "version": "3.8.4"
+    "version": "3.8.3"
   },
   "scripts": {
     "replaceExtensionName": "cd scripts && yarn replaceExtensionName"
