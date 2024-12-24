@@ -11,7 +11,7 @@ export interface ColorProps {
   disabled?: boolean
   invalid?: boolean
   hidden?: boolean
-  onChange?: (value: string) => void
-  onConfirm?: (value: string) => void
-  onCancel?: (value: string) => void
+  onChange?: (event: Event) => void
+  onConfirm?: (event: Event) => void
+  onCancel?: (event: Event) => void
 }

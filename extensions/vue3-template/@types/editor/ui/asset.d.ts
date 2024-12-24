@@ -6,7 +6,7 @@ export interface AssetProps {
   invalid?: boolean
   readonly?: boolean
   disabled?: boolean
-  onChange?: (value: string) => void
-  onConfirm?: (value: string) => void
+  onChange?: (event: Event) => void
+  onConfirm?: (event: Event) => void
   onPreview?: () => void
 }

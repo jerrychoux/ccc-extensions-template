@@ -1,9 +1,14 @@
 'use strict'
+const extension = Editor.I18n.t('menu.extension')
+
 module.exports = {
+  editor_menu: `${extension}/插件模板`,
   open_panel: '默认面板',
-  send_to_panel: '发送消息给面板',
+  open_about: '关于',
   description: '含有一个基于Vue3.x开发的面板的扩展',
 
+  panel_default_title: '插件模板',
+  panel_about_title: '关于',
   menu_create_asset: '创建 Vue3 Template 资源',
   menu_asset_command_parent: 'Vue3 Template',
   menu_asset_command_1: '命令 1',

@@ -1,13 +1,14 @@
 import fs from 'fs'
 import path, { resolve, join } from 'path'
-import { defineConfig } from 'vite'
-import type { Plugin } from 'vite'
+import { createFilter, defineConfig } from 'vite'
+import type { Plugin, Terser } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { builtinModules } from 'module'
-import obfuscator from 'rollup-plugin-obfuscator'
+import javascriptObfuscator from 'javascript-obfuscator'
 import { TInputOptions } from 'javascript-obfuscator/typings/src/types/options/TInputOptions'
 
 type Mode = 'production' | 'develop'
+type Prod = 'full' | 'free'
 const packageJson = JSON.parse(fs.readFileSync('./package.json', 'utf-8'))
 const extensionName = JSON.stringify(packageJson.name)
 
@@ -107,27 +108,33 @@ function fixImportFilesPath(mode: Mode): Plugin {
   }
 }
 
-const obfuscatorConfig: TInputOptions = {
+const obfuscationConfig: TInputOptions = {
   compact: true, // 压缩代码，移除多余的空格和换行符
   controlFlowFlattening: true, // 控制流扁平化，使代码结构更复杂
   controlFlowFlatteningThreshold: 0.8, // 控制流扁平化的应用比例 (0-1)
   deadCodeInjection: true, // 是否注入死代码，增加代码复杂度
-  deadCodeInjectionThreshold: 0.5, // 死代码注入的比例 (0-1)
+  deadCodeInjectionThreshold: 0.3, // 死代码注入的比例 (0-1)
   debugProtection: true, // 防止代码在调试器中运行
   stringArray: true, // 是否将字符串转换为数组形式
   rotateStringArray: true, // 随机打乱字符串数组顺序
   selfDefending: true, // 增加自我防护，防止代码被篡改
   splitStrings: true, // 是否将长字符串拆分为多个部分
   splitStringsChunkLength: 5, // 拆分字符串时的最大长度
+  // identifierNamesGenerator: 'mangled', // 使用短变量名
 }
 
-function doJsObfuscator(mode: Mode) {
-  return mode === 'production'
-    ? obfuscator({
-        options: obfuscatorConfig,
-        exclude: ['node_modules/**'],
-      })
-    : undefined
+const obfuscationFilter = createFilter(['**/*.js', '**/*.ts'], ['node_modules/**'])
+function obfuscationPlugin(mode: Mode): Plugin {
+  return {
+    name: 'javascript-obfuscator',
+    transform(code, id) {
+      if (mode !== 'production') return null // 非生产环境跳过处理
+      if (!obfuscationFilter(id)) return null
+
+      const result = javascriptObfuscator.obfuscate(code, obfuscationConfig)
+      return { code: result.getObfuscatedCode() }
+    },
+  }
 }
 
 const inputOption: InputOption = {
@@ -145,11 +152,24 @@ const getInputs = () =>
   Object.fromEntries(Object.entries(inputOption).map(([key, value]) => [key, resolve(__dirname, `./src/${value}`)]))
 
 const getGlobalVariables = (mode: Mode) => {
+  // 获取命令行参数
+  const argv = process.argv
+
+  // 解析 --prod 参数
+  const prodArgIndex = argv.indexOf('--prod')
+  const prodValue: Prod = prodArgIndex !== -1 ? (argv[prodArgIndex + 1] as Prod) : 'full'
+
   return {
     __EXTENSION_MODE__: JSON.stringify(mode),
+    __EXTENSION_PROD__: JSON.stringify(prodValue),
     __EXTENSION_VERSION__: JSON.stringify(packageJson.version),
     __EXTENSION_NAME__: JSON.stringify(packageJson.name),
   }
+}
+
+const terserConfig: Terser.MinifyOptions = {
+  compress: { drop_console: true, drop_debugger: true },
+  format: { comments: false },
 }
 
 export default defineConfig(({ mode }) => ({
@@ -171,13 +191,7 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     minify: mode === 'production' ? 'terser' : false,
-    terserOptions:
-      mode === 'production'
-        ? {
-            compress: { drop_console: true, drop_debugger: true },
-            format: { comments: false },
-          }
-        : undefined,
+    terserOptions: mode === 'production' ? terserConfig : undefined,
     outDir: 'dist',
     rollupOptions: {
       preserveEntrySignatures: 'allow-extension',
@@ -217,7 +231,7 @@ export default defineConfig(({ mode }) => ({
       plugins: [
         organizeInputFileToCustomFolder(inputOption),
         fixImportFilesPath(mode as Mode),
-        doJsObfuscator(mode as Mode),
+        obfuscationPlugin(mode as Mode),
       ],
       external: ['electron', ...builtinModules],
     },

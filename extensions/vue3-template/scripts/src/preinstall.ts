@@ -1,9 +1,9 @@
-"use strict";
 // preinstall.js
+// 测试测试
 if (!/yarn\.js$/.test(process.env.npm_execpath || '')) {
-    console.error(`
+  console.error(`
     ⚠️  This project requires Yarn for package management. 
     Please use 'yarn install' instead of 'npm install'. 
-    `);
-    process.exit(1); // 退出进程，防止安装继续
+    `)
+  process.exit(1) // 退出进程，防止安装继续
 }

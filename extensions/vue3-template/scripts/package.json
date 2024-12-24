@@ -1,7 +1,11 @@
 {
   "name": "scripts",
   "version": "1.0.0",
+  "type": "module",
   "license": "MIT",
+  "scripts": {
+    "build": "node ./esbuild.js"
+  },
   "dependencies": {
     "main": "file:../"
   }

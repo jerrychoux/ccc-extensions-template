@@ -4,6 +4,6 @@ export interface CheckboxProps {
   disabled?: boolean
   invalid?: boolean
   hidden?: boolean
-  onChange?: (value: string) => void
-  onConfirm?: (value: string) => void
+  onChange?: (event: Event) => void
+  onConfirm?: (event: Event) => void
 }

@@ -55,9 +55,25 @@ function generateZip(datas: PackData[], filePath: string) {
     const output = fs.createWriteStream(filePath)
     const archive = archiver('zip', { zlib: { level: 9 } })
 
-    output.on('close', () => resolve())
-    archive.on('warning', (err) => err.code !== 'ENOENT' && reject(err))
-    archive.on('error', (err) => reject(err))
+    // 当压缩包生成完成时
+    output.on('close', () => {
+      console.log(`Package created: ${filePath}`)
+      // 成功时调用 resolve
+      resolve()
+    })
+
+    // 处理警告
+    archive.on('warning', (err) => {
+      if (err.code !== 'ENOENT') {
+        console.warn(`Warning: ${err.message}`)
+      }
+    })
+
+    // 处理错误
+    archive.on('error', (err) => {
+      // 错误时调用 reject
+      reject(new Error(`Error creating zip: ${err.message}`))
+    })
 
     for (const data of datas) {
       const { type, path, name, content } = data
@@ -74,10 +90,11 @@ function generateZip(datas: PackData[], filePath: string) {
           continue
         }
 
-        const states = fs.statSync(path!)
-        if (states.isDirectory()) {
+        const stats = fs.statSync(path!)
+        if (stats.isDirectory()) {
           archive.directory(path!, name ?? false)
         } else {
+          archive.file(path!, { name: name! })
         }
       }
     }
@@ -85,6 +102,17 @@ function generateZip(datas: PackData[], filePath: string) {
     archive.pipe(output)
     archive.finalize()
   })
+}
+
+function deleteOldPackage(filePath: string): void {
+  try {
+    if (fs.existsSync(filePath)) {
+      console.log(`Deleting old package: ${filePath}`)
+      fs.removeSync(filePath) // 同步删除旧的包
+    }
+  } catch (err) {
+    console.error(`Failed to delete old package: ${err.message}`)
+  }
 }
 
 const rootPath = process.cwd()
@@ -98,11 +126,14 @@ const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
 const extensionJson = extractExtensionJson(packageJson)
 const outputFileName = `${extensionJson.name}.zip`
 const outputFilePath = path.resolve(rootPath, outputFileName)
-const formattedJsonString = JSON.stringify(extensionJson, null, 2)
+
 const packDatas: PackData[] = [
-  { type: 'content', name: packageJsonFileName, content: formattedJsonString },
+  { type: 'content', name: packageJsonFileName, content: JSON.stringify(extensionJson, null, 2) },
   { type: 'path', name: distDirName, path: distDirPath },
   { type: 'path', name: i18nDirName, path: i18nDirPath },
 ]
 
+deleteOldPackage(outputFilePath)
 generateZip(packDatas, outputFilePath)
+  .then(() => console.log('Successfully generated package!'))
+  .catch((err) => console.error(`Failed to generate package: ${err.message}`))

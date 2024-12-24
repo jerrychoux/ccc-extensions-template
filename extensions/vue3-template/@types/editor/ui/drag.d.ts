@@ -6,8 +6,8 @@ export interface DragItemProps {
   value?: string
   additional?: boolean
   draging?: boolean
-  onDragStart?: (value: string) => void
-  onDragEnd?: (value: string) => void
+  onDragStart?: (event: Event) => void
+  onDragEnd?: (event: Event) => void
 }
 
 export interface DragAreaProps {
@@ -17,7 +17,7 @@ export interface DragAreaProps {
   types?: string
   additional?: boolean
   draging?: boolean
-  onDragStart?: (value: string) => void
-  onDragEnd?: (value: string) => void
-  onDrag?: (value: string) => void
+  onDragStart?: (event: Event) => void
+  onDragEnd?: (event: Event) => void
+  onDrag?: (event: Event) => void
 }
