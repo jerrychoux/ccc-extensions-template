@@ -7,10 +7,13 @@ import { builtinModules } from 'module'
 import javascriptObfuscator from 'javascript-obfuscator'
 import { TInputOptions } from 'javascript-obfuscator/typings/src/types/options/TInputOptions'
 
-type Mode = 'production' | 'develop'
+type Mode = 'production' | 'development'
 type Prod = 'full' | 'free'
 const packageJson = JSON.parse(fs.readFileSync('./package.json', 'utf-8'))
 const extensionName = JSON.stringify(packageJson.name)
+
+const isProd = (mode: Mode) => mode === 'production'
+const isFree = (prod: Prod) => prod === 'free'
 
 interface InputOption {
   [entryAlias: string]: string
@@ -94,8 +97,7 @@ function fixImportFilesPath(mode: Mode): Plugin {
           const matchPath = file.code.match(pathPattern)
           const pathVariableName = matchPath ? matchPath[1] : 'require("path")'
 
-          const assetFilePathPattern =
-            mode === 'production' ? assetFilePathPatternProduction : assetFilePathPatternDevelop
+          const assetFilePathPattern = isProd(mode) ? assetFilePathPatternProduction : assetFilePathPatternDevelop
           const matchAssets = [...file.code.matchAll(assetFilePathPattern)]
           matchAssets.forEach((match) => {
             const replaceTemplate = `{0}.resolve(Editor.Package.getPath({1}), 'dist', '{2}')`
@@ -128,7 +130,7 @@ function obfuscationPlugin(mode: Mode): Plugin {
   return {
     name: 'javascript-obfuscator',
     transform(code, id) {
-      if (mode !== 'production') return null // 非生产环境跳过处理
+      if (!isProd(mode)) return null // 非生产环境跳过处理
       if (!obfuscationFilter(id)) return null
 
       const result = javascriptObfuscator.obfuscate(code, obfuscationConfig)
@@ -151,19 +153,21 @@ const inputKeys = Object.keys(inputOption)
 const getInputs = () =>
   Object.fromEntries(Object.entries(inputOption).map(([key, value]) => [key, resolve(__dirname, `./src/${value}`)]))
 
-const getGlobalVariables = (mode: Mode) => {
-  // 获取命令行参数
+const getCustomParamValue = <T>(key: string): T | undefined => {
   const argv = process.argv
+  const index = argv.indexOf(`--${key}`)
+  return index !== -1 ? (argv[index + 1] as T) : undefined
+}
 
+const getGlobalVariables = (mode: Mode) => {
   // 解析 --prod 参数
-  const prodArgIndex = argv.indexOf('--prod')
-  const prodValue: Prod = prodArgIndex !== -1 ? (argv[prodArgIndex + 1] as Prod) : 'full'
+  const prod = getCustomParamValue<Prod>('prod') ?? 'full' // 默认为 full
 
   return {
     __EXTENSION_MODE__: JSON.stringify(mode),
-    __EXTENSION_PROD__: JSON.stringify(prodValue),
+    __EXTENSION_PROD__: JSON.stringify(prod),
     __EXTENSION_VERSION__: JSON.stringify(packageJson.version),
-    __EXTENSION_NAME__: JSON.stringify(packageJson.name),
+    __EXTENSION_NAME__: JSON.stringify(packageJson.name + (isFree(prod) ? `-${prod}` : '')),
   }
 }
 
@@ -190,8 +194,8 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    minify: mode === 'production' ? 'terser' : false,
-    terserOptions: mode === 'production' ? terserConfig : undefined,
+    minify: isProd(mode as Mode) ? 'terser' : false,
+    terserOptions: isProd(mode as Mode) ? terserConfig : undefined,
     outDir: 'dist',
     rollupOptions: {
       preserveEntrySignatures: 'allow-extension',

@@ -3,6 +3,7 @@ const extension = Editor.I18n.t('menu.extension')
 
 module.exports = {
   editor_menu: `${extension}/插件模板`,
+  editor_menu_free: `${extension}/图片优化(免费版)`,
   open_panel: '默认面板',
   open_about: '关于',
   description: '含有一个基于Vue3.x开发的面板的扩展',

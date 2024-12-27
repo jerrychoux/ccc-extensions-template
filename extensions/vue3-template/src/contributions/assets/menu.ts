@@ -45,13 +45,13 @@ export function onDBMenu(assetInfo: AssetInfo) {
     {
       label: 'i18n:vue3-template.menu_db_command_1',
       click() {
-        console.log(`db command 1 from ${assetInfo.name}`)
+        log(`db command 1 from ${assetInfo.name}`)
       },
     },
     {
       label: 'i18n:vue3-template.menu_db_command_2',
       click() {
-        console.log(`db command 2 from ${assetInfo.name}`)
+        log(`db command 2 from ${assetInfo.name}`)
       },
     },
   ]
@@ -62,7 +62,7 @@ export function onPanelMenu(assetInfo: AssetInfo) {
     {
       label: 'i18n:vue3-template.menu_panel_command_1',
       click() {
-        console.log(`clicked on the plain area of the panel. No asset, 'assetInfo' is ${assetInfo}`)
+        log(`clicked on the plain area of the panel. No asset, 'assetInfo' is ${assetInfo}`)
       },
     },
   ]

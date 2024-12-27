@@ -2,6 +2,9 @@ import archiver from 'archiver'
 import * as fs from 'fs-extra'
 import * as path from 'path'
 
+type Prod = 'full' | 'free'
+const isFree = (prod: Prod) => prod === 'free'
+
 interface ExtensionJson {
   package_version: string
   name: string
@@ -11,36 +14,52 @@ interface ExtensionJson {
   description: string
   main: string
   panels: {}
-  contributions: {}
-}
-
-function createExtensionJson(data: Record<string, any> = {}): ExtensionJson {
-  return {
-    package_version: data.package_version ?? '1.0.0',
-    name: data.name ?? 'Default Extension',
-    version: data.version ?? '1.0.0',
-    author: data.author ?? 'Unknown',
-    editor: data.editor ?? 'Unknown',
-    description: data.description ?? 'No description provided.',
-    main: data.main ?? 'index.js',
-    panels: data.panels ?? {},
-    contributions: data.contributions ?? {},
+  contributions: {
+    menu?: Array<{ path: string; label: string; message: string }>
   }
 }
 
-function extractExtensionJson(obj: Record<string, any>): ExtensionJson {
-  const result = {} as ExtensionJson
+function createExtensionJson(data: Record<string, any> = {}): ExtensionJson {
+  const extensionJson = data as ExtensionJson
+  return {
+    package_version: extensionJson.package_version ?? '1.0.0',
+    name: extensionJson.name ?? 'Default Extension',
+    version: extensionJson.version ?? '1.0.0',
+    author: extensionJson.author ?? 'Unknown',
+    editor: extensionJson.editor ?? 'Unknown',
+    description: extensionJson.description ?? 'No description provided.',
+    main: extensionJson.main ?? 'index.js',
+    panels: extensionJson.panels ?? {},
+    contributions: extensionJson.contributions ?? {},
+  }
+}
 
-  const extensionInstance = createExtensionJson()
-  const keys = Object.keys(extensionInstance) as (keyof ExtensionJson)[]
+function extractExtensionJson(obj: Record<string, any>, prod: Prod = 'full'): ExtensionJson {
+  const extensionJson = createExtensionJson(obj)
 
-  keys.forEach((key) => {
-    if (key in obj) {
-      result[key] = obj[key]
+  if (isFree(prod)) {
+    const searchValue = extensionJson.name
+    const replaceValue = `${extensionJson.name}-free`
+
+    extensionJson.name = replaceValue
+    extensionJson.description = extensionJson.description.replace(searchValue, replaceValue)
+
+    for (const key in extensionJson.panels) {
+      if (extensionJson.panels.hasOwnProperty(key)) {
+        extensionJson.panels[key].title = extensionJson.panels[key].title.replace(searchValue, replaceValue)
+      }
     }
-  })
 
-  return result
+    extensionJson.contributions.menu?.forEach((item) => {
+      item.path = item.path.replace(searchValue, replaceValue)
+      item.label = item.label.replace(searchValue, replaceValue)
+
+      // editor_menu_free
+      item.path = item.path.replace('editor_menu', 'editor_menu_free')
+    })
+  }
+
+  return extensionJson
 }
 
 interface PackData {
@@ -52,6 +71,11 @@ interface PackData {
 
 function generateZip(datas: PackData[], filePath: string) {
   return new Promise<void>((resolve, reject) => {
+    const outputDir = path.dirname(filePath)
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirpSync(outputDir)
+    }
+
     const output = fs.createWriteStream(filePath)
     const archive = archiver('zip', { zlib: { level: 9 } })
 
@@ -115,6 +139,13 @@ function deleteOldPackage(filePath: string): void {
   }
 }
 
+const getCustomParamValue = <T>(key: string): T | undefined => {
+  const argv = process.argv
+  const index = argv.indexOf(`--${key}`)
+  return index !== -1 ? (argv[index + 1] as T) : undefined
+}
+
+const prod = getCustomParamValue<Prod>('prod') ?? 'full'
 const rootPath = process.cwd()
 const packageJsonFileName = 'package.json'
 const packageJsonPath = path.resolve(rootPath, packageJsonFileName)
@@ -123,9 +154,9 @@ const distDirPath = path.resolve(rootPath, distDirName)
 const i18nDirName = 'i18n'
 const i18nDirPath = path.resolve(rootPath, i18nDirName)
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
-const extensionJson = extractExtensionJson(packageJson)
+const extensionJson = extractExtensionJson(packageJson, prod)
 const outputFileName = `${extensionJson.name}.zip`
-const outputFilePath = path.resolve(rootPath, outputFileName)
+const outputFilePath = path.resolve(rootPath, 'publish', outputFileName)
 
 const packDatas: PackData[] = [
   { type: 'content', name: packageJsonFileName, content: JSON.stringify(extensionJson, null, 2) },

@@ -17,7 +17,9 @@
     "build:watch": "concurrently \"yarn vue-tsc --watch\" \"yarn vite build --watch --mode development\"",
     "build:scripts": "yarn --cwd ./scripts build",
     "build:production": "vue-tsc && vite build --mode production",
-    "packaging": "yarn build:production && yarn build:scripts && node ./scripts/dist/packaging.cjs"
+    "build:production-free": "vue-tsc && vite build --mode production -- --prod free",
+    "packaging": "yarn build:production && yarn build:scripts && node ./scripts/dist/packaging.cjs",
+    "packaging:free": "yarn build:production-free && yarn build:scripts && node ./scripts/dist/packaging.cjs --prod free"
   },
   "description": "i18n:vue3-template.description",
   "main": "./dist/main.js",
