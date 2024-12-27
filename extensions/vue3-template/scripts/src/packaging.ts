@@ -64,17 +64,15 @@ function extractExtensionJson(obj: Record<string, any>, prod: Prod = 'full'): Ex
 
 interface PackData {
   type: 'path' | 'content'
+  name: string
   path?: string
-  name?: string
   content?: string
 }
 
-function generateZip(datas: PackData[], filePath: string) {
+function generateZip(datas: PackData[], filePath: string, extraPath?: string): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     const outputDir = path.dirname(filePath)
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirpSync(outputDir)
-    }
+    fs.ensureDirSync(outputDir)
 
     const output = fs.createWriteStream(filePath)
     const archive = archiver('zip', { zlib: { level: 9 } })
@@ -99,29 +97,34 @@ function generateZip(datas: PackData[], filePath: string) {
       reject(new Error(`Error creating zip: ${err.message}`))
     })
 
-    for (const data of datas) {
-      const { type, path, name, content } = data
+    datas.forEach((data) => {
+      const type = data.type
+      const name = extraPath ? path.posix.join(extraPath, data.name) : data.name
       if (type === 'content') {
-        if (!content || !name) {
-          console.error(`Invalid path or context.`)
-          continue
-        }
-
-        archive.append(content, { name })
-      } else {
-        if (path && !fs.existsSync(path)) {
-          console.error(`Path does not exist: ${path}`)
-          continue
-        }
-
-        const stats = fs.statSync(path!)
-        if (stats.isDirectory()) {
-          archive.directory(path!, name ?? false)
+        const content = data.content
+        if (content) {
+          archive.append(content, { name })
         } else {
-          archive.file(path!, { name: name! })
+          console.error(`Invalid content: ${name}`)
+        }
+      } else {
+        const path = data.path
+        if (path) {
+          if (fs.existsSync(path)) {
+            const stats = fs.statSync(path)
+            if (stats.isDirectory()) {
+              archive.directory(path, name)
+            } else {
+              archive.file(path, { name })
+            }
+          } else {
+            console.error(`Path does not exist: ${name}`)
+          }
+        } else {
+          console.error(`Invalid path: ${name}`)
         }
       }
-    }
+    })
 
     archive.pipe(output)
     archive.finalize()
@@ -165,6 +168,6 @@ const packDatas: PackData[] = [
 ]
 
 deleteOldPackage(outputFilePath)
-generateZip(packDatas, outputFilePath)
+generateZip(packDatas, outputFilePath, extensionJson.name)
   .then(() => console.log('Successfully generated package!'))
   .catch((err) => console.error(`Failed to generate package: ${err.message}`))
