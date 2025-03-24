@@ -10,73 +10,60 @@ const entryPoints = [
   { path: "./src/replaceExtensionName.ts", compress: false, obfuscate: false },
 ];
 
-// 检查文件是否需要重新构建
-const shouldRebuild = (srcPath, distPath) => {
-  // 如果 dist 文件不存在，则需要构建
-  if (!fs.existsSync(distPath)) return true;
+// ====================== 工具函数 ======================
+/**
+ * 获取输出文件路径
+ * @param {string} srcPath - 源文件路径
+ * @returns {string} 输出文件路径
+ */
+const getDistPath = (srcPath) =>
+  path.join("./dist", path.basename(srcPath, ".ts") + ".cjs");
 
-  // 获取 src 和 dist 文件的最后修改时间
+/**
+ * 检查是否需要重新构建
+ * @param {string} srcPath - 源文件路径
+ * @param {string} distPath - 输出文件路径
+ * @returns {boolean} 是否需要重新构建
+ */
+const shouldRebuild = (srcPath, distPath) => {
+  if (!fs.existsSync(distPath)) return true; // 如果 dist 文件不存在，则需要构建
   const srcStats = fs.statSync(srcPath);
   const distStats = fs.statSync(distPath);
-
-  // 如果 src 文件比 dist 文件新，则需要构建
-  return srcStats.mtimeMs > distStats.mtimeMs;
+  return srcStats.mtimeMs > distStats.mtimeMs; // 如果 src 更新，则需要构建
 };
 
-// 检查是否需要构建
-const needsBuild = entryPoints.some((entry) => {
-  const srcPath = entry.path;
-  const distPath = path.join("./dist", path.basename(srcPath, ".ts") + ".cjs");
-  return shouldRebuild(srcPath, distPath);
-});
+/**
+ * 检查所有入口文件是否需要构建
+ * @returns {boolean} 是否需要进行构建
+ */
+const needsBuild = () =>
+  entryPoints.some((entry) =>
+    shouldRebuild(entry.path, getDistPath(entry.path))
+  );
 
+/**
+ * 处理错误并抛出
+ * @param {string} message - 错误信息
+ * @throws {Error}
+ */
+const handleError = (message) => {
+  throw new Error(message);
+};
+
+// ====================== 插件定义 ======================
 // Terser 压缩配置
 const terserConfig = {
   compress: { drop_console: true, drop_debugger: true },
   format: { comments: false },
 };
 
+/**
+ * 获取 Terser 配置
+ * @param {Object} entry - 入口文件配置
+ * @returns {Object} Terser 配置
+ */
 const getTerserConfig = (entry) =>
   typeof entry.compress === "object" ? entry.compress : terserConfig;
-
-// 内存存储中间结果
-const processedFiles = new Map();
-
-// 查找对应的入口文件配置
-const findEntryConfig = (outputPath) =>
-  entryPoints.find((entry) =>
-    outputPath.endsWith(path.basename(entry.path, ".js") + ".cjs")
-  );
-
-// Terser 压缩插件
-const terserPlugin = {
-  name: "terser-plugin",
-  setup(build) {
-    build.onEnd(async (result) => {
-      for (const outputFile of result.outputFiles || []) {
-        if (!outputFile.path.endsWith(".cjs")) continue;
-
-        const entry = findEntryConfig(outputFile.path);
-        if (!entry || !entry.compress) continue;
-
-        try {
-          const code = processedFiles.get(outputFile.path) || outputFile.text;
-          const minified = await terser.minify(code, getTerserConfig(entry));
-
-          if (minified.error) {
-            throw new Error(`Terser minification failed: ${minified.error}`);
-          }
-
-          // 存储压缩后的代码
-          processedFiles.set(outputFile.path, minified.code);
-          console.log(`Compressed: ${outputFile.path}`);
-        } catch (err) {
-          throw new Error(err.message);
-        }
-      }
-    });
-  },
-};
 
 // JavaScript Obfuscator 混淆配置
 const obfuscationConfig = {
@@ -94,6 +81,76 @@ const obfuscationConfig = {
   identifierNamesGenerator: "mangled", // 使用短变量名
 };
 
+// 内存存储中间结果
+const processedFiles = new Map();
+
+/**
+ * 查找对应的入口文件配置
+ * @param {string} outputPath - 输出文件路径
+ * @returns {Object} 入口文件配置
+ */
+const findEntryConfig = (outputPath) =>
+  entryPoints.find((entry) =>
+    outputPath.endsWith(path.basename(entry.path, ".js") + ".cjs")
+  );
+
+/**
+ * 压缩代码
+ * @param {string} code - 源代码
+ * @param {Object} entry - 入口文件配置
+ * @returns {Promise<string>} 压缩后的代码
+ */
+const minifyCode = async (code, entry) => {
+  const minified = await terser.minify(code, getTerserConfig(entry));
+  if (minified.error)
+    handleError(`Terser minification failed: ${minified.error}`);
+  return minified.code;
+};
+
+/**
+ * 混淆代码
+ * @param {string} code - 源代码
+ * @returns {string} 混淆后的代码
+ */
+const obfuscateCode = (code) => {
+  return javascriptObfuscator
+    .obfuscate(code, obfuscationConfig)
+    .getObfuscatedCode();
+};
+
+/**
+ * 文件写入
+ * @param {string} filePath - 文件路径
+ * @param {string} code - 写入的代码
+ */
+const writeFile = (filePath, code) => {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, code);
+};
+
+// Terser 压缩插件
+const terserPlugin = {
+  name: "terser-plugin",
+  setup(build) {
+    build.onEnd(async (result) => {
+      for (const outputFile of result.outputFiles || []) {
+        if (!outputFile.path.endsWith(".cjs")) continue;
+        const entry = findEntryConfig(outputFile.path);
+        if (!entry || !entry.compress) continue;
+
+        try {
+          const code = processedFiles.get(outputFile.path) || outputFile.text;
+          const minified = await minifyCode(code, entry);
+          processedFiles.set(outputFile.path, minified);
+          console.log(`Compressed: ${outputFile.path}`);
+        } catch (err) {
+          handleError(err.message);
+        }
+      }
+    });
+  },
+};
+
 // JavaScript Obfuscator 混淆插件
 const obfuscationPlugin = {
   name: "obfuscation-plugin",
@@ -101,21 +158,16 @@ const obfuscationPlugin = {
     build.onEnd((result) => {
       for (const outputFile of result.outputFiles || []) {
         if (!outputFile.path.endsWith(".cjs")) continue;
-
         const entry = findEntryConfig(outputFile.path);
         if (!entry || !entry.obfuscate) continue;
 
         try {
           const code = processedFiles.get(outputFile.path) || outputFile.text;
-          const obfuscatedCode = javascriptObfuscator
-            .obfuscate(code, obfuscationConfig)
-            .getObfuscatedCode();
-
-          // 存储混淆后的代码
+          const obfuscatedCode = obfuscateCode(code);
           processedFiles.set(outputFile.path, obfuscatedCode);
           console.log(`Obfuscated: ${outputFile.path}`);
         } catch (err) {
-          throw new Error(
+          handleError(
             `Obfuscation failed for ${outputFile.path}: ${err.message}`
           );
         }
@@ -135,10 +187,9 @@ const writeFilePlugin = {
         try {
           const finalCode =
             processedFiles.get(outputFile.path) || outputFile.text;
-          fs.mkdirSync(path.dirname(outputFile.path), { recursive: true });
-          fs.writeFileSync(outputFile.path, finalCode);
+          writeFile(outputFile.path, finalCode);
         } catch (err) {
-          throw new Error(
+          handleError(
             `Failed to write file ${outputFile.path}: ${err.message}`
           );
         }
@@ -147,33 +198,36 @@ const writeFilePlugin = {
   },
 };
 
-// 如果需要构建，则执行 esbuild
-if (needsBuild) {
+// ====================== 主逻辑 ======================
+const runBuild = async () => {
   const baseCommand = `yarn run build`;
   process.stdout.write(`[?] ${baseCommand}`);
 
-  esbuild
-    .build({
-      entryPoints: entryPoints.map((entry) => entry.path), // 提取路径作为输入文件
-      outdir: "./dist", // 输出目录
-      bundle: false, // 打包所有依赖
-      minify: true, // 启用压缩
-      platform: "node", // Node.js 平台
-      target: "node14", // 目标为 Node.js 14
-      format: "cjs", // 输出 CommonJS 格式
-      write: false, // 不自动写文件，交由插件处理
-      outExtension: { ".js": ".cjs" }, // 将 .js 文件扩展名替换为 .cjs
+  try {
+    await esbuild.build({
+      entryPoints: entryPoints.map((entry) => entry.path),
+      outdir: "./dist",
+      bundle: false,
+      minify: true,
+      platform: "node",
+      target: "node14",
+      format: "cjs",
+      write: false,
+      outExtension: { ".js": ".cjs" },
       plugins: [terserPlugin, obfuscationPlugin, writeFilePlugin],
-    })
-    .then(() => {
-      process.stdout.clearLine();
-      process.stdout.cursorTo(0);
-      console.log(chalk.greenBright(`[√] ${baseCommand}`));
-    })
-    .catch((error) => {
-      process.stdout.clearLine();
-      process.stdout.cursorTo(0);
-      console.log(chalk.redBright(`[x] ${baseCommand}`));
-      console.error(error.message);
     });
+
+    process.stdout.clearLine();
+    process.stdout.cursorTo(0);
+    console.log(chalk.greenBright(`[√] ${baseCommand}`));
+  } catch (error) {
+    process.stdout.clearLine();
+    process.stdout.cursorTo(0);
+    console.log(chalk.redBright(`[x] ${baseCommand}`));
+    console.error(error.message);
+  }
+};
+
+if (needsBuild()) {
+  runBuild();
 }
