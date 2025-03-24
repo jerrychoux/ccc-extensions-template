@@ -2,12 +2,12 @@
   "name": "ccc-extensions-template",
   "uuid": "2994e889-9884-42f8-aa22-4756ee754014",
   "version": "3.0.0",
-  "license": "MIT",
+  "license": "ISC",
   "_sourceId": "c30b28da-749e-479b-bcb6-cecd8d7be9e3",
   "creator": {
     "version": "3.8.3"
   },
   "scripts": {
-    "replaceExtensionName": "cd scripts && yarn replaceExtensionName"
+    "replaceExtensionName": "yarn --cwd ./workflow replaceExtensionName"
   }
 }

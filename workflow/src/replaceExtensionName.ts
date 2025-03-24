@@ -1,13 +1,15 @@
-import * as yargs from "yargs";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
+
 import * as fs from "fs";
 import * as path from "path";
 
-const argv = yargs
+const argv = yargs(hideBin(process.argv))
   .option("name", {
     type: "string",
     description: "The new extension name",
   })
-  .demandOption("name", "Please provide the 'name' argument")
+  .demandOption("name", 'Please provide the "name" argument')
   .parseSync();
 
 const oldExtensionName = "vue3-template";
@@ -51,7 +53,7 @@ async function readReplaceWrite(
 async function parsePackageJson(): Promise<void> {
   const packageJsonPath = path.resolve(
     __dirname,
-    `../extensions/${oldExtensionName}/package.json`
+    `../../extensions/${oldExtensionName}/package.json`
   );
   await readReplaceWrite(packageJsonPath, [
     [new RegExp(oldExtensionName, "g"), newExtensionName],
@@ -61,10 +63,10 @@ async function parsePackageJson(): Promise<void> {
 // 处理 README.md 和 README.zh-CN.md 文件
 async function parseReadmeFiles(): Promise<void> {
   const readmePaths = [
-    path.resolve(__dirname, `../extensions/${oldExtensionName}/README.md`),
+    path.resolve(__dirname, `../../extensions/${oldExtensionName}/README.md`),
     path.resolve(
       __dirname,
-      `../extensions/${oldExtensionName}/README.zh-CN.md`
+      `../../extensions/${oldExtensionName}/README.zh-CN.md`
     ),
   ];
 
@@ -81,11 +83,11 @@ async function parseReadmeFiles(): Promise<void> {
 async function parseI18nRelatedFiles(): Promise<void> {
   const i18nDir = path.resolve(
     __dirname,
-    `../extensions/${oldExtensionName}/i18n`
+    `../../extensions/${oldExtensionName}/i18n`
   );
   const srcDir = path.resolve(
     __dirname,
-    `../extensions/${oldExtensionName}/src`
+    `../../extensions/${oldExtensionName}/src`
   );
 
   // 递归替换目录下的文件
@@ -130,11 +132,11 @@ async function parseI18nRelatedFiles(): Promise<void> {
 async function renameFolder(): Promise<void> {
   const oldFolderPath = path.resolve(
     __dirname,
-    `../extensions/${oldExtensionName}`
+    `../../extensions/${oldExtensionName}`
   );
   const newFolderPath = path.resolve(
     __dirname,
-    `../extensions/${newExtensionName}`
+    `../../extensions/${newExtensionName}`
   );
 
   try {
