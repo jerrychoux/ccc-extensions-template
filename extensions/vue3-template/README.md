@@ -10,10 +10,10 @@ Node.js
 ## Install
 
 ```bash
-# Install dependent modules
-npm install
-# build
-npm run build
+# Build the extension
+yarn run build
+# Package the extension
+yarn run packaging
 ```
 
 ## Usage

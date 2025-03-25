@@ -9,10 +9,10 @@ Node.js
 ## 安装
 
 ```bash
-# 安装依赖模块
-npm install
 # 构建
-npm run build
+yarn run build
+# 打包
+yarn run packaging
 ```
 
 ## 用法
