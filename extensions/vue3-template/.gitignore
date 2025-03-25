@@ -4,4 +4,7 @@
 dist
 *.zip
 
-!workflow/dist/
+#//////////////////////////
+# Workflow
+#//////////////////////////
+workflow/dist/
