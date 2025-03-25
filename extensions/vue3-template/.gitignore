@@ -4,4 +4,4 @@
 dist
 *.zip
 
-!scripts/dist/
+!workflow/dist/

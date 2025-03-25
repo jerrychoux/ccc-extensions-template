@@ -26,6 +26,6 @@
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "@types/**/*.d.ts"],
-  "exclude": ["vite.config.ts", "scripts/**/*.ts"],
+  "exclude": ["vite.config.ts", "workflow/**/*.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

@@ -12,14 +12,13 @@
     "yarn": "1.x"
   },
   "scripts": {
-    "preinstall": "node ./scripts/dist/preinstall.cjs",
-    "build": "vue-tsc && vite build --mode development",
-    "build:watch": "concurrently \"yarn vue-tsc --watch\" \"yarn vite build --watch --mode development\"",
-    "build:scripts": "yarn --cwd ./scripts build",
-    "build:production": "vue-tsc && vite build --mode production",
-    "build:production-free": "vue-tsc && vite build --mode production -- --prod free",
-    "packaging": "yarn build:production && yarn build:scripts && node ./scripts/dist/packaging.cjs",
-    "packaging:free": "yarn build:production-free && yarn build:scripts && node ./scripts/dist/packaging.cjs --prod free"
+    "init": "yarn --cwd ./workflow run init",
+    "build": "yarn run init && vue-tsc && vite build --mode development",
+    "build:watch": "yarn run init && concurrently \"yarn vue-tsc --watch\" \"yarn vite build --watch --mode development\"",
+    "build:production": "yarn run init && vue-tsc && vite build --mode production",
+    "build:production-free": "yarn run init && vue-tsc && vite build --mode production -- --prod free",
+    "packaging": "yarn build:production && yarn --cwd ./workflow run packaging",
+    "packaging:free": "yarn build:production-free && yarn --cwd ./workflow run packaging --prod free"
   },
   "description": "i18n:vue3-template.description",
   "main": "./dist/main.js",
@@ -30,14 +29,10 @@
   },
   "devDependencies": {
     "@cocos/creator-types": "^3.8.3",
-    "@rollup/plugin-node-resolve": "^15.3.0",
-    "@types/archiver": "^6.0.2",
     "@types/fs-extra": "^9.0.5",
     "@types/node": "^22.5.5",
     "@vitejs/plugin-vue": "^5.1.2",
-    "archiver": "^7.0.1",
     "concurrently": "^8.2.2",
-    "esbuild": "^0.24.0",
     "javascript-obfuscator": "^4.1.1",
     "terser": "^5.36.0",
     "typescript": "^5.5.4",

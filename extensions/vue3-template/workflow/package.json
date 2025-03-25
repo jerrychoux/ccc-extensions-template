@@ -1,0 +1,22 @@
+{
+  "name": "workflow",
+  "version": "1.0.0",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "init": "node ./init.js",
+    "build": "yarn run init && node ./build.js",
+    "packaging": "yarn run build && node ./dist/packaging.cjs"
+  },
+  "devDependencies": {
+    "@types/archiver": "^6.0.2",
+    "@types/yargs": "^17.0.33",
+    "archiver": "^7.0.1",
+    "yargs": "^17.7.2",
+    "javascript-obfuscator": "^4.1.1",
+    "terser": "^5.36.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.5.4",
+    "chalk": "^5.4.1"
+  }
+}

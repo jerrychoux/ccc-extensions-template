@@ -149,7 +149,7 @@ const getCustomParamValue = <T>(key: string): T | undefined => {
 }
 
 const prod = getCustomParamValue<Prod>('prod') ?? 'full'
-const rootPath = process.cwd()
+const rootPath = path.resolve(process.cwd(), '..')
 const packageJsonFileName = 'package.json'
 const packageJsonPath = path.resolve(rootPath, packageJsonFileName)
 const distDirName = 'dist'

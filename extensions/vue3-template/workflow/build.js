@@ -6,7 +6,7 @@ import javascriptObfuscator from 'javascript-obfuscator'
 import chalk from 'chalk'
 
 // 入口文件配置
-const entryPoints = [{ path: './src/replaceExtensionName.ts', compress: false, obfuscate: false }]
+const entryPoints = [{ path: './src/packaging.ts', compress: true, obfuscate: false }]
 
 // ====================== 工具函数 ======================
 /**
