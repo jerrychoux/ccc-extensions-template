@@ -3,7 +3,7 @@ const extension = Editor.I18n.t('menu.extension')
 
 module.exports = {
   editor_menu: `${extension}/Vue3 Template`,
-  editor_menu_free: `${extension}/Images Optimize(free)`,
+  editor_menu_free: `${extension}/Vue3 Template(free)`,
   open_panel: 'Default Panel',
   open_about: 'About',
   description: 'Extension with a panel based on Vue3.x',
